@@ -1,0 +1,33 @@
+html.dark-theme,html.dark-theme body{background:#151c18;color:#e3e9e1;color-scheme:dark}
+.dark-theme .app-shell,.dark-theme .main-content{background:#151c18}
+.dark-theme .sidebar,.dark-theme .public-header,.dark-theme .trip-planner,.dark-theme .destination-card,.dark-theme .profile-summary,.dark-theme .profile-edit-card,.dark-theme .security-card,.dark-theme .settings-modal,.dark-theme .saved-trip-card{background:#202923;border-color:#344239}
+.dark-theme .public-page,.dark-theme .auth-page,.dark-theme .profile-page{background:#151c18;color:#e3e9e1}
+.dark-theme .topbar,.dark-theme .footer,.dark-theme .public-footer,.dark-theme .profile-button{border-color:#344239;background-color:transparent}
+.dark-theme .brand,.dark-theme h1,.dark-theme h2,.dark-theme h3,.dark-theme .destination-info h3,.dark-theme .profile-summary h2,.dark-theme .profile-details strong,.dark-theme .account-action-button strong{color:#e4ebe2}
+.dark-theme p,.dark-theme .welcome-copy,.dark-theme .profile-heading p,.dark-theme .profile-form-intro,.dark-theme .destination-info p,.dark-theme .profile-details p,.dark-theme .security-form>p{color:#aab7aa}
+.dark-theme .nav-item,.dark-theme .breadcrumb,.dark-theme .auth-back,.dark-theme .public-header nav a,.dark-theme .profile-text strong{color:#b6c2b5}
+.dark-theme .nav-item.active{background:#2b4033;color:#cce1ce}
+.dark-theme .help-card,.dark-theme .assistant-banner,.dark-theme .empty-trips,.dark-theme .field input,.dark-theme .field select,.dark-theme .auth-form input,.dark-theme .profile-form input,.dark-theme .profile-form textarea,.dark-theme .profile-form select,.dark-theme .security-form input,.dark-theme .account-action-button,.dark-theme .settings-modal-close,.dark-theme .cancel-edit-button,.dark-theme .profile-logout,.dark-theme .notification-button{background:#1a211c;color:#e2e9e0;border-color:#3a493e}
+.dark-theme .account-action-button:hover,.dark-theme .edit-profile-button:hover,.dark-theme .cancel-edit-button:hover{background:#29382d}
+.dark-theme .field input::placeholder,.dark-theme .profile-form textarea::placeholder{color:#849187}
+.dark-theme .profile-details>div,.dark-theme .profile-summary-rule,.dark-theme .security-form{border-color:#344239}
+.dark-theme .account-action-button small,.dark-theme .profile-details>div>span,.dark-theme .field-label,.dark-theme .section-kicker,.dark-theme .profile-summary-label{color:#9eac9e}
+.dark-theme .avatar-style-options>label{background:#1a211c;border-color:#3a493e;color:#c2cec1}
+.dark-theme .avatar-style-options>label.selected{background:#2a3b2d;border-color:#91b398}
+.dark-theme .auth-visual{background:linear-gradient(145deg,#294b38,#1f392c 70%,#1b3127)}
+.dark-theme .landing-inspiration{background:#243229}
+.dark-theme .landing-inspiration .inspiration-cta{background:#1a211c;color:#d6e0d4;border-color:#435448}
+.dark-theme .landing-strip{border-color:#344239;color:#a9b4a8}
+.dark-theme .trip-total,.dark-theme .arrow-circle,.dark-theme .remove-trip-button{background:#1a211c;border-color:#3a493e;color:#c3cec2}
+.dark-theme .auth-message{background:#382a25;color:#edc8b8;border-color:#b57a5f}
+.dark-theme .saved-message,.dark-theme .password-checklist li.valid{color:#a5d0a9}
+.dark-theme .password-checklist{background:#1a211c;border-color:#3a493e}
+.dark-theme .password-checklist li{color:#c99e8a}
+.dark-theme .delete-account-button{background:#342623;border-color:#6c443b;color:#efb9ac}
+.dark-theme .settings-modal-backdrop{background:#070a08d9}
+.dark-theme .theme-toggle{background:#27342b;color:#dce6da;border-color:#435448}
+.theme-toggle{display:inline-flex;align-items:center;gap:7px;border:1px solid #e3e8e0;border-radius:18px;background:#fff;color:#5d6d60;padding:7px 10px;font:600 8px 'DM Sans',sans-serif;cursor:pointer;white-space:nowrap}
+.theme-toggle>span:first-child{font-size:12px;color:#bd8756}
+.route-loading.dark-theme{background:#151c18;color:#d9e4d7}
+.dark-theme .verification-card{background:#202923;border-color:#344239}
+.dark-theme .verification-mark{background:#2b4033;color:#d1e4ce}
