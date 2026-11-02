@@ -74,6 +74,16 @@ export async function deleteTrip(tripId) {
   return sendJson(`/trips/${tripId}`, 'DELETE')
 }
 
+export async function searchCities(query, signal) {
+  const params = new URLSearchParams({ q: query })
+  const response = await fetch(`${apiBase}/locations/search?${params}`, { credentials: 'include', signal })
+  return readResponse(response)
+}
+
+export function suggestTripRoute(tripId) {
+  return sendJson(`/trips/${tripId}/route-suggestion`, 'POST', {})
+}
+
 export async function logoutAccount() {
   const token = await getCsrfToken()
   const response = await fetch(`${apiBase}/auth/logout`, {

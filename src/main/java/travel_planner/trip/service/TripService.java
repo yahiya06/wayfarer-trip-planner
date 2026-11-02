@@ -41,6 +41,14 @@ public class TripService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public TripResponse getMine(String email, Long tripId) {
+        AppUser owner = findOwner(email);
+        TravelTrip trip = tripRepository.findByIdAndUser_Id(tripId, owner.getId())
+                .orElseThrow(TripNotFoundException::new);
+        return TripResponse.from(trip);
+    }
+
     @Transactional
     public void delete(String email, Long tripId) {
         AppUser owner = findOwner(email);

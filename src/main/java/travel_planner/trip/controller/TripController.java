@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import travel_planner.trip.dto.CreateTripRequest;
 import travel_planner.trip.dto.TripResponse;
+import travel_planner.trip.dto.RouteSuggestionResponse;
+import travel_planner.trip.service.GeminiRouteSuggestionService;
 import travel_planner.trip.service.TripService;
 
 import java.util.List;
@@ -22,9 +24,11 @@ import java.util.List;
 public class TripController {
 
     private final TripService tripService;
+    private final GeminiRouteSuggestionService routeSuggestionService;
 
-    public TripController(TripService tripService) {
+    public TripController(TripService tripService, GeminiRouteSuggestionService routeSuggestionService) {
         this.tripService = tripService;
+        this.routeSuggestionService = routeSuggestionService;
     }
 
     @PostMapping
@@ -37,6 +41,12 @@ public class TripController {
     @GetMapping
     public List<TripResponse> myTrips(Authentication authentication) {
         return tripService.getMine(authentication.getName());
+    }
+
+    @PostMapping("/{tripId}/route-suggestion")
+    public RouteSuggestionResponse suggestRoute(Authentication authentication, @PathVariable Long tripId) {
+        TripResponse trip = tripService.getMine(authentication.getName(), tripId);
+        return routeSuggestionService.suggest(trip);
     }
 
     @DeleteMapping("/{tripId}")

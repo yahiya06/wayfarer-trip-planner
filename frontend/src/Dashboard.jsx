@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
-import { createTrip, deleteTrip, getTrips } from './api.js'
+import { createTrip, deleteTrip, getTrips, suggestTripRoute } from './api.js'
 import './App.css'
 import './Trip.css'
+import CityAutocomplete from './CityAutocomplete.jsx'
 import Avatar from './Avatar.jsx'
 import ThemeToggle from './ThemeToggle.jsx'
 
 const initialTrip = {
-  source: 'Indore',
-  destination: 'Goa',
+  source: '',
+  destination: '',
   startDate: '',
   endDate: '',
   travelers: '2',
@@ -21,25 +22,82 @@ function Dashboard({ user, onNavigate, darkTheme, onToggleTheme }) {
   const [trip, setTrip] = useState(initialTrip)
   const [notice, setNotice] = useState('')
   const [trips, setTrips] = useState([])
+  const [sourceCity, setSourceCity] = useState(null)
+  const [destinationCity, setDestinationCity] = useState(null)
+  const [tripToPlan, setTripToPlan] = useState(null)
+  const [routeSuggestion, setRouteSuggestion] = useState('')
+  const [routeDisclaimer, setRouteDisclaimer] = useState('')
+  const [routeLoading, setRouteLoading] = useState(false)
+  const [routeError, setRouteError] = useState('')
 
   useEffect(() => {
     getTrips().then(setTrips).catch(() => setTrips([]))
   }, [])
 
   function updateTrip(event) {
-    setTrip({ ...trip, [event.target.name]: event.target.value })
+    setTrip((current) => ({ ...current, [event.target.name]: event.target.value }))
+    setNotice('')
+  }
+
+  function swapTripCities() {
+    setTrip((current) => ({ ...current, source: current.destination, destination: current.source }))
+    setSourceCity(destinationCity)
+    setDestinationCity(sourceCity)
+    setNotice('')
+  }
+
+  function updateCity(field, value) {
+    setTrip((current) => ({ ...current, [field]: value }))
+    if (field === 'source') setSourceCity(null)
+    if (field === 'destination') setDestinationCity(null)
+    setNotice('')
+  }
+
+  function selectCity(field, city) {
+    setTrip((current) => ({ ...current, [field]: city.label }))
+    if (field === 'source') setSourceCity(city)
+    if (field === 'destination') setDestinationCity(city)
     setNotice('')
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
     setNotice('')
+    if (!sourceCity || !destinationCity) {
+      setNotice('Choose a city from the suggestions for both your starting point and destination.')
+      return
+    }
+    if (sourceCity.label === destinationCity.label) {
+      setNotice('Choose two different cities for your trip.')
+      return
+    }
     try {
       const savedTrip = await createTrip({ ...trip, travelers: Number(trip.travelers) })
       setTrips((currentTrips) => [savedTrip, ...currentTrips])
-      setNotice('Trip saved to My trips. This is a saved trip outline; transport and hotel options have not been searched.')
+      setTripToPlan(savedTrip)
+      setRouteSuggestion('')
+      setRouteDisclaimer('')
+      setRouteError('')
+      setNotice('Your trip is saved. Ask the AI for a route idea below.')
+      window.setTimeout(() => document.getElementById('route-assistant')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
     } catch (error) {
       setNotice(error.message)
+    }
+  }
+
+  async function getRouteSuggestion(savedTrip) {
+    setRouteLoading(true)
+    setRouteError('')
+    setRouteSuggestion('')
+    setRouteDisclaimer('')
+    try {
+      const response = await suggestTripRoute(savedTrip.id)
+      setRouteSuggestion(response.suggestion)
+      setRouteDisclaimer(response.disclaimer)
+    } catch (error) {
+      setRouteError(error.message)
+    } finally {
+      setRouteLoading(false)
     }
   }
 
@@ -47,6 +105,7 @@ function Dashboard({ user, onNavigate, darkTheme, onToggleTheme }) {
     try {
       await deleteTrip(tripId)
       setTrips((currentTrips) => currentTrips.filter((savedTrip) => savedTrip.id !== tripId))
+      if (tripToPlan?.id === tripId) setTripToPlan(null)
     } catch (error) {
       setNotice(error.message)
     }
@@ -111,15 +170,15 @@ function Dashboard({ user, onNavigate, darkTheme, onToggleTheme }) {
           </div>
 
           <form className="trip-form" onSubmit={handleSubmit}>
-            <label className="field location-field">
-              <span className="field-label">FROM</span>
-              <span className="input-wrap"><span className="location-dot origin-dot" /><input name="source" value={trip.source} onChange={updateTrip} placeholder="Your starting city" required /></span>
-            </label>
-            <button className="swap-button" type="button" aria-label="Swap source and destination" onClick={() => setTrip({ ...trip, source: trip.destination, destination: trip.source })}>↔</button>
-            <label className="field location-field destination-field">
-              <span className="field-label">GOING TO</span>
-              <span className="input-wrap"><span className="location-dot destination-dot" /><input name="destination" value={trip.destination} onChange={updateTrip} placeholder="Where to?" required /></span>
-            </label>
+            <div className="field location-field">
+              <label className="field-label" htmlFor="trip-source">FROM</label>
+              <CityAutocomplete id="trip-source" name="source" value={trip.source} selected={Boolean(sourceCity)} onChange={(value) => updateCity('source', value)} onSelect={(city) => selectCity('source', city)} placeholder="Your starting city" dotClass="origin-dot" />
+            </div>
+            <button className="swap-button" type="button" aria-label="Swap source and destination" onClick={swapTripCities}>↔</button>
+            <div className="field location-field destination-field">
+              <label className="field-label" htmlFor="trip-destination">GOING TO</label>
+              <CityAutocomplete id="trip-destination" name="destination" value={trip.destination} selected={Boolean(destinationCity)} onChange={(value) => updateCity('destination', value)} onSelect={(city) => selectCity('destination', city)} placeholder="Where to?" dotClass="destination-dot" />
+            </div>
             <label className="field date-field">
               <span className="field-label">DEPARTURE</span>
               <input name="startDate" type="date" value={trip.startDate} onChange={updateTrip} required />
@@ -139,6 +198,27 @@ function Dashboard({ user, onNavigate, darkTheme, onToggleTheme }) {
           {notice && <p className="form-notice" role="status">{notice}</p>}
           <div className="planner-footnote"><span>✳</span> Your plans, thoughtfully put together.</div>
         </section>
+
+        {tripToPlan && (
+          <section className="ai-route-planner" id="route-assistant" aria-labelledby="route-assistant-title">
+            <div className="transport-planner-heading">
+              <div><div className="section-kicker">YOUR TRIP IS SAVED</div><h2 id="route-assistant-title">Ask your AI travel assistant</h2><p>Get an AI-generated route concept for this saved trip.</p></div>
+              <button className="transport-close" type="button" onClick={() => setTripToPlan(null)} aria-label="Close transport planner">×</button>
+            </div>
+            <div className="transport-route-summary">
+              <div><span>FROM</span><strong>{tripToPlan.source}</strong></div><span className="transport-route-arrow" aria-hidden="true">→</span><div><span>TO</span><strong>{tripToPlan.destination}</strong></div>
+              <div className="transport-trip-dates"><span>TRAVEL DATES</span><strong>{formatDate(tripToPlan.startDate)} – {formatDate(tripToPlan.endDate)}</strong></div>
+              <div className="transport-trip-dates"><span>TRAVELERS</span><strong>{tripToPlan.travelers}</strong></div>
+            </div>
+                        <section className="ai-route-card" aria-labelledby="route-suggestion-heading">
+              <div className="ai-route-card-heading"><div><span>AI ROUTE IDEAS</span><h3 id="route-suggestion-heading">Plan a possible way there</h3></div><button className="ai-route-button" type="button" onClick={() => getRouteSuggestion(tripToPlan)} disabled={routeLoading}>{routeLoading ? 'Asking Gemini…' : routeSuggestion ? 'Suggest another route' : 'Suggest a route'}</button></div>
+              <p className="ai-route-intro">Gemini can suggest high-level route ideas, but it does not check live services, prices, or availability. When you request a suggestion, this trip’s cities, dates, and traveler count are sent to Google Gemini; free-tier prompts may be used to improve Google products.</p>
+              {routeError && <p className="ai-route-error" role="alert">{routeError}</p>}
+              {routeLoading && <p className="ai-route-loading" role="status">Preparing a route idea…</p>}
+              {routeSuggestion && <div className="ai-route-answer"><p>{routeSuggestion}</p><small>{routeDisclaimer}</small></div>}
+            </section>
+          </section>
+        )}
 
         <section className="ideas-section" aria-labelledby="ideas-heading">
           <div className="section-title-row"><div><div className="section-kicker">A PLACE TO START</div><h2 id="ideas-heading">A few ideas for your next escape</h2></div><a href="#destinations" className="text-link">Explore destinations <span>↗</span></a></div>
@@ -162,14 +242,14 @@ function Dashboard({ user, onNavigate, darkTheme, onToggleTheme }) {
         <section className="saved-trips-section" id="saved-trips" aria-labelledby="saved-trips-heading">
           <div className="section-title-row"><div><div className="section-kicker">YOUR PERSONAL TRAVEL LIST</div><h2 id="saved-trips-heading">My trips</h2></div><span className="trip-total">{trips.length} saved</span></div>
           {trips.length === 0 ? <div className="empty-trips"><span>✳</span><p>No trips saved yet. Start with a destination above and your trip outline will appear here.</p></div> : (
-            <div className="saved-trip-list">{trips.map((savedTrip) => <article className="saved-trip-card" key={savedTrip.id}><div className="saved-trip-route"><span className="saved-route-source">{savedTrip.source}</span><span className="saved-route-line">→</span><strong>{savedTrip.destination}</strong></div><div className="saved-trip-meta"><span>{formatDate(savedTrip.startDate)} – {formatDate(savedTrip.endDate)}</span><span>{savedTrip.travelers} {savedTrip.travelers === 1 ? 'traveler' : 'travelers'}</span></div><span className="saved-trip-label">TRIP OUTLINE</span><button className="remove-trip-button" type="button" onClick={() => handleDeleteTrip(savedTrip.id)} aria-label={`Remove trip to ${savedTrip.destination}`}>×</button></article>)}</div>
+            <div className="saved-trip-list">{trips.map((savedTrip) => <article className="saved-trip-card" key={savedTrip.id}><div className="saved-trip-route"><span className="saved-route-source">{savedTrip.source}</span><span className="saved-route-line">→</span><strong>{savedTrip.destination}</strong></div><div className="saved-trip-meta"><span>{formatDate(savedTrip.startDate)} – {formatDate(savedTrip.endDate)}</span><span>{savedTrip.travelers} {savedTrip.travelers === 1 ? 'traveler' : 'travelers'}</span></div><span className="saved-trip-label">TRIP OUTLINE</span><button className="plan-saved-trip-button" type="button" onClick={() => { setTripToPlan(savedTrip); setRouteSuggestion(""); setRouteDisclaimer(""); setRouteError(""); window.setTimeout(() => document.getElementById("route-assistant")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50) }}>Ask AI for a route</button><button className="remove-trip-button" type="button" onClick={() => handleDeleteTrip(savedTrip.id)} aria-label={`Remove trip to ${savedTrip.destination}`}>×</button></article>)}</div>
           )}
         </section>
 
         <section className="assistant-banner" id="assistant">
           <div className="assistant-icon">✳</div>
-          <div className="assistant-copy"><span>YOUR TRAVEL SIDEKICK</span><h2>Curious about Goa?</h2><p>Ask about beaches, local favorites, or what to pack. Your assistant can help you explore.</p></div>
-          <a className="assistant-link" href="mailto:hello@wayfarer.example?subject=Travel%20assistant">Meet your assistant <span>↗</span></a>
+          <div className="assistant-copy"><span>AI TRIP PLANNING</span><h2>Need a route idea?</h2><p>Save a trip, then ask Gemini for a route concept. Check real schedules and prices with providers.</p></div>
+          <a className="assistant-link" href="#plan-trip">Plan a trip <span>↗</span></a>
         </section>
 
         <footer className="footer"><span>© 2026 Wayfarer</span><span>Made for the places that stay with you <b>✳</b></span></footer>
